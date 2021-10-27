@@ -1,5 +1,10 @@
 package bst
 
+import (
+	"fmt"
+	"github.com/emirpasic/gods/utils"
+)
+
 // Node stores left, right, and parent Node pointers;
 // and NodeData, containing the key and the value the caller wishes to store.
 type Node struct {
@@ -27,6 +32,30 @@ func NewNode(k, v interface{}) *Node {
 			Value: v,
 		},
 	}
+}
+
+// dfs traverses the nodes in a depth-first search paradigm.
+// The function prints by converting each node's key and value to a string.
+func (node *Node) dfs() {
+	if node == nil {
+		return
+	}
+	fmt.Println("Key: " + utils.ToString(node.Data.Key))
+	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	node.leftChild().dfs()
+	node.rightChild().dfs()
+}
+
+// inOrder traverses the nodes "in order," printing every node's value in order from smallest to greatest.
+// The function prints by converting each node's key and value to a string.
+func (node *Node) inOrder() {
+	if node == nil {
+		return
+	}
+	node.leftChild().inOrder()
+	fmt.Println("Key: " + utils.ToString(node.Data.Key))
+	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	node.rightChild().inOrder()
 }
 
 // isRoot checks to see if Node's parent is nil.

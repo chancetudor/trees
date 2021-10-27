@@ -2,9 +2,303 @@ package bst
 
 import (
 	"github.com/emirpasic/gods/utils"
+	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 )
+
+func TestBST_InsertThenUpdate(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	type args struct {
+		key   interface{}
+		value interface{}
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+			args: args{
+				key:   1,
+				value: "2",
+			},
+			want:    "2",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			keyVals := make(map[int]int)
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				keyVals[k] = v
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			for keys, _ := range keyVals {
+				newValue, err := tree.Update(keys, "new value")
+				if err != nil {
+					t.Errorf(err.Error())
+				}
+				if newValue != "new value" {
+					t.Errorf("Delete() = %v, want %v", newValue, "new value")
+				}
+			}
+		})
+	}
+}
+
+func TestBST_InsertThenSize(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+			want: 101,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			keyVals := make(map[int]int)
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				keyVals[k] = v
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			if got := tree.Size(); got != tt.want {
+				t.Errorf("Size() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBST_InsertThenSearch(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			keyVals := make(map[int]int)
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				keyVals[k] = v
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			for keys, _ := range keyVals {
+				found := tree.Search(keys)
+				if found != true {
+					t.Errorf("Delete() = %v, want %v", found, true)
+				}
+			}
+		})
+	}
+}
+
+func TestBST_InsertThenDelete(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			keyVals := make(map[int]int)
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				keyVals[k] = v
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			for keys, _ := range keyVals {
+				key, err := tree.Delete(keys)
+				if err != nil {
+					t.Error(err)
+				}
+				if key != keys {
+					t.Errorf("Delete() = %v, want %v", key, keys)
+				}
+			}
+		})
+	}
+}
+
+func TestBST_InsertThenClear(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			tree.Clear()
+			if tree.root != nil {
+				t.Error("Root is not nil")
+			}
+			if tree.size != 0 {
+				t.Error("Size is not 0")
+			}
+		})
+	}
+}
+
+func TestBST_InsertThenDFS(t *testing.T) {
+	type fields struct {
+		root       *Node
+		comparator utils.Comparator
+		size       int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "test 1",
+			fields: fields{
+				root:       NewNode(1, "1"),
+				comparator: utils.IntComparator,
+				size:       1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := &BST{
+				root:       tt.fields.root,
+				comparator: tt.fields.comparator,
+				size:       tt.fields.size,
+			}
+			for i := 0; i < 100; i++ {
+				rand.Seed(time.Now().UnixNano())
+				k := rand.Int()
+				v := rand.Int()
+				_, err := tree.Insert(k, v)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			tree.InOrderTraversal()
+		})
+	}
+}
 
 func TestBST_Clear(t *testing.T) {
 	type fields struct {

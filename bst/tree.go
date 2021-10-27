@@ -49,6 +49,17 @@ func NewWithStringComparator() *BST {
 	return NewWith(utils.StringComparator)
 }
 
+// DepthFirstTraversal (pre-order traversal) traverses the binary search tree by printing the root node,
+// then recursively visiting the left and the right nodes of the current node.
+func (tree *BST) DepthFirstTraversal() {
+	tree.Root().dfs()
+}
+
+// InOrderTraversal prints every node's value in order from smallest to greatest.
+func (tree *BST) InOrderTraversal() {
+	tree.Root().inOrder()
+}
+
 // Insert takes a key and a value of type interface, and inserts a new Node with that key and value.
 // The function inserts by key; that is, the key of the new node is
 // compared against current nodes to find the correct insertion point.

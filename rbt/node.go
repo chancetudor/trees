@@ -1,5 +1,10 @@
 package rbt
 
+const BLACK = 0
+const RED = 1
+const LEFT = 2
+const RIGHT = 3
+
 // Node stores left, right, and parent Node pointers; the node's color,
 // and NodeData, containing the key and the value the caller wishes to store.
 type Node struct {
@@ -7,7 +12,7 @@ type Node struct {
 	right  *Node
 	parent *Node
 	Data   *NodeData
-	Color  int
+	color  int
 }
 
 // NodeData stores the key and the value of the Node.
@@ -18,7 +23,7 @@ type NodeData struct {
 
 // NewNode takes in a key and a value and returns a pointer to type Node.
 // When creating a new node, the left and right children, as well as the parent node, are set to nil.
-func NewNode(color int, k, v interface{}) *Node {
+func NewNode(k, v interface{}, color int) *Node {
 	return &Node{
 		left:   nil,
 		right:  nil,
@@ -27,7 +32,7 @@ func NewNode(color int, k, v interface{}) *Node {
 			Key:   k,
 			Value: v,
 		},
-		Color: color,
+		color: color,
 	}
 }
 
@@ -60,7 +65,11 @@ func (node *Node) setLeftChild(left *Node) {
 
 // leftChild returns the Node's left child.
 func (node *Node) leftChild() *Node {
-	return node.left
+	if node.left != nil {
+		return node.left
+	}
+
+	return nil
 }
 
 // setRight sets a Node's right child
@@ -70,7 +79,11 @@ func (node *Node) setRightChild(right *Node) {
 
 // rightChild returns the Node's right child.
 func (node *Node) rightChild() *Node {
-	return node.right
+	if node.right != nil {
+		return node.right
+	}
+
+	return nil
 }
 
 // setParent sets a node's parent.
@@ -80,7 +93,61 @@ func (node *Node) setParent(parent *Node) {
 
 // getParent returns a node's parent.
 func (node *Node) getParent() *Node {
-	return node.parent
+	if node.parent != nil {
+		return node.parent
+	}
+
+	return nil
+}
+
+// setGrandparent sets a node's grandparent.
+func (node *Node) setGrandparent(grandparent *Node) {
+	node.parent.parent = grandparent
+}
+
+// grandparent returns a node's grandparent.
+func (node *Node) grandparent() *Node {
+	if node.getParent().getParent() != nil {
+		return node.parent.parent
+	}
+
+	return nil
+}
+
+// uncle returns a node's uncle and a side flag, for use in insertFixup.
+func (node *Node) uncle() (*Node, int) {
+	// return grandparent's right child
+	if node.grandparent().leftChild() == node.getParent() && node.grandparent().rightChild() != nil {
+		return node.grandparent().rightChild(), RIGHT
+	}
+	// return grandparent's left child
+	if node.grandparent().leftChild() != nil {
+		return node.grandparent().leftChild(), LEFT
+	}
+
+	return nil, -1
+}
+
+// recolor flips the color of the node.
+// i.e., if a node is black, recolor colors the node red
+// and if a node is red, recolor colors the node black.
+func (node *Node) recolor() {
+	if node.color == BLACK {
+		node.setColor(RED)
+		return
+	}
+
+	node.setColor(BLACK)
+}
+
+// setColor sets a node's color to either red or black.
+func (node *Node) setColor(newColor int) {
+	node.color = newColor
+}
+
+// getColor returns a node's color, either red (1) or black (0).
+func (node *Node) getColor() int {
+	return node.color
 }
 
 // clear marks a node's parent and children as nil, effectively severing it from the tree.
@@ -88,6 +155,7 @@ func (node *Node) clear() {
 	node.setParent(nil)
 	node.setLeftChild(nil)
 	node.setRightChild(nil)
+	node.setColor(BLACK)
 }
 
 // setKey takes a key and sets it as the key for a node.
@@ -108,4 +176,58 @@ func (node *Node) setValue(value interface{}) {
 // value returns the value of a node.
 func (node *Node) value() interface{} {
 	return node.Data.Value
+}
+
+// successor returns the node with the smallest key greater than the node the method is called on
+func (node *Node) successor() *Node {
+	// successor is the furthest left child of the right subtree
+	if node.rightChild() != nil {
+		return node.subtreeMin(node.rightChild())
+	}
+	// otherwise, work up and to the right of the subtrees
+	parent := node.getParent()
+	temp := node
+	for parent != nil && temp == parent.rightChild() {
+		temp = parent
+		parent = parent.getParent()
+	}
+
+	return parent
+}
+
+// predecessor returns the node with the largest key smaller than the node the method is called on
+func (node *Node) predecessor() *Node {
+	// successor is the furthest left child of the right subtree
+	if node.leftChild() != nil {
+		return node.subtreeMax(node.rightChild())
+	}
+	// otherwise, work up and to the right of the subtrees
+	parent := node.getParent()
+	temp := node
+	for parent != nil && temp == parent.leftChild() {
+		temp = parent
+		parent = parent.getParent()
+	}
+
+	return parent
+}
+
+// subtreeMin returns the furthest left child of a subtree
+func (node *Node) subtreeMin(child *Node) *Node {
+	temp := child
+	for temp.leftChild() != nil {
+		temp = temp.leftChild()
+	}
+
+	return temp
+}
+
+// subtreeMax returns the furthest right child of a subtree
+func (node *Node) subtreeMax(child *Node) *Node {
+	temp := child
+	for temp.rightChild() != nil {
+		temp = temp.rightChild()
+	}
+
+	return temp
 }

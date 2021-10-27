@@ -60,12 +60,14 @@ func (node *Node) isLeaf() bool {
 
 // setLeftChild sets a Node's left child
 func (node *Node) setLeftChild(left *Node) {
-	node.left = left
+	if node != nil {
+		node.left = left
+	}
 }
 
 // leftChild returns the Node's left child.
 func (node *Node) leftChild() *Node {
-	if node.left != nil {
+	if node != nil {
 		return node.left
 	}
 
@@ -74,12 +76,14 @@ func (node *Node) leftChild() *Node {
 
 // setRight sets a Node's right child
 func (node *Node) setRightChild(right *Node) {
-	node.right = right
+	if node != nil {
+		node.right = right
+	}
 }
 
 // rightChild returns the Node's right child.
 func (node *Node) rightChild() *Node {
-	if node.right != nil {
+	if node != nil {
 		return node.right
 	}
 
@@ -88,12 +92,14 @@ func (node *Node) rightChild() *Node {
 
 // setParent sets a node's parent.
 func (node *Node) setParent(parent *Node) {
-	node.parent = parent
+	if node != nil {
+		node.parent = parent
+	}
 }
 
 // getParent returns a node's parent.
 func (node *Node) getParent() *Node {
-	if node.parent != nil {
+	if node != nil {
 		return node.parent
 	}
 
@@ -107,7 +113,7 @@ func (node *Node) setGrandparent(grandparent *Node) {
 
 // grandparent returns a node's grandparent.
 func (node *Node) grandparent() *Node {
-	if node.getParent().getParent() != nil {
+	if node != nil {
 		return node.parent.parent
 	}
 
@@ -117,15 +123,11 @@ func (node *Node) grandparent() *Node {
 // uncle returns a node's uncle and a side flag, for use in insertFixup.
 func (node *Node) uncle() (*Node, int) {
 	// return grandparent's right child
-	if node.grandparent().leftChild() == node.getParent() && node.grandparent().rightChild() != nil {
+	if node.grandparent().leftChild() == node.getParent() {
 		return node.grandparent().rightChild(), RIGHT
 	}
-	// return grandparent's left child
-	if node.grandparent().leftChild() != nil {
-		return node.grandparent().leftChild(), LEFT
-	}
-
-	return nil, -1
+	// else return grandparent's left child
+	return node.grandparent().leftChild(), LEFT
 }
 
 // recolor flips the color of the node.
@@ -142,12 +144,19 @@ func (node *Node) recolor() {
 
 // setColor sets a node's color to either red or black.
 func (node *Node) setColor(newColor int) {
-	node.color = newColor
+	if node != nil {
+		node.color = newColor
+	}
 }
 
 // getColor returns a node's color, either red (1) or black (0).
+// Returns black if the node is nil.
 func (node *Node) getColor() int {
-	return node.color
+	if node != nil {
+		return node.color
+	}
+
+	return BLACK
 }
 
 // clear marks a node's parent and children as nil, effectively severing it from the tree.

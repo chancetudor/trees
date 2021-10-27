@@ -53,11 +53,11 @@ func NewWithStringComparator() *RBT {
 // compared against current nodes to find the correct insertion point.
 // The function returns the newly inserted node's key or an error, if there was one.
 func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
-	newNode := NewNode(key, value, RED)
+	newNode := NewNode(key, value, -1)
 
 	// tree is empty, so we set the new node as the root and increase the size of the tree by 1.
 	if tree.IsEmpty() {
-		newNode.recolor() // Case 0: recolor the node
+		newNode.setColor(BLACK) // Case 0: recolor the root
 		tree.setRoot(newNode)
 		tree.setSize(tree.Size() + 1)
 		return newNode.key(), nil
@@ -90,6 +90,9 @@ func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
 		parent.setRightChild(newNode)
 	}
 
+	newNode.setRightChild(nil)
+	newNode.setLeftChild(nil)
+	newNode.setColor(RED)
 	tree.insertFixup(newNode)
 	tree.setSize(tree.Size() + 1)
 
@@ -104,9 +107,9 @@ func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
 // 3. newNode's uncle is black (line): rotate node's grandparent in
 // the opposite direction of newNode's placement, then recolor original parent and grandparent.
 func (tree *RBT) insertFixup(node *Node) {
-	for node.getParent() != nil && node.getParent().getColor() == RED {
+	for node.getParent().getColor() == RED {
 		uncle, side := node.uncle()
-		if uncle != nil && side == RIGHT {
+		if side == RIGHT {
 			if uncle.getColor() == RED { // case 1
 				node.getParent().setColor(BLACK)
 				uncle.recolor()
@@ -120,7 +123,7 @@ func (tree *RBT) insertFixup(node *Node) {
 				node.grandparent().setColor(RED)
 				tree.rightRotate(node)
 			}
-		} else {
+		} else if side == LEFT {
 			if uncle.getColor() == RED { // case 1
 				node.getParent().setColor(BLACK)
 				uncle.recolor()
@@ -207,7 +210,7 @@ func (tree *RBT) Size() int {
 }
 
 func (tree *RBT) leftRotate(node *Node) {
-	newParent := node.leftChild()
+	newParent := node.rightChild()
 	node.setRightChild(newParent.leftChild())
 	if newParent.leftChild() != nil {
 		newParent.leftChild().setParent(node)
@@ -225,7 +228,7 @@ func (tree *RBT) leftRotate(node *Node) {
 }
 
 func (tree *RBT) rightRotate(node *Node) {
-	newParent := node.rightChild()
+	newParent := node.leftChild()
 	node.setLeftChild(newParent.rightChild())
 	if newParent.rightChild() != nil {
 		newParent.rightChild().setParent(node)

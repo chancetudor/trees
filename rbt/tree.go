@@ -48,6 +48,17 @@ func NewWithStringComparator() *RBT {
 	return NewWith(utils.StringComparator)
 }
 
+// DepthFirstTraversal (pre-order traversal) traverses the binary search tree by printing the root node,
+// then recursively visiting the left and the right nodes of the current node.
+func (tree *RBT) DepthFirstTraversal() {
+	tree.Root().dfs()
+}
+
+// InOrderTraversal prints every node's value in order from smallest to greatest.
+func (tree *RBT) InOrderTraversal() {
+	tree.Root().inOrder()
+}
+
 // Insert takes a key and a value of type interface, and inserts a new Node with that key and value.
 // The function inserts by key; that is, the key of the new node is
 // compared against current nodes to find the correct insertion point.
@@ -165,6 +176,16 @@ func (tree *RBT) Search(key interface{}) bool {
 	}
 
 	return true
+}
+
+// IsBalanced returns whether the maximum height of any branch
+// is no more than 1 + the minimum height of any branch.
+func (tree *RBT) IsBalanced() bool {
+	if tree.IsEmpty() {
+		return true
+	}
+
+	return tree.Root().checkBalance() != -1
 }
 
 // ReturnNodeValue takes a key and returns the value associated with the key or an error, if there was one.

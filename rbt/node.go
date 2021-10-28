@@ -1,5 +1,11 @@
 package rbt
 
+import (
+	"fmt"
+	"github.com/emirpasic/gods/utils"
+	"math"
+)
+
 const BLACK = 0
 const RED = 1
 const LEFT = 2
@@ -34,6 +40,30 @@ func NewNode(k, v interface{}, color int) *Node {
 		},
 		color: color,
 	}
+}
+
+// dfs traverses the nodes in a depth-first search paradigm.
+// The function prints by converting each node's key and value to a string.
+func (node *Node) dfs() {
+	if node == nil {
+		return
+	}
+	fmt.Println("Key: " + utils.ToString(node.Data.Key))
+	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	node.leftChild().dfs()
+	node.rightChild().dfs()
+}
+
+// inOrder traverses the nodes "in order," printing every node's value in order from smallest to greatest.
+// The function prints by converting each node's key and value to a string.
+func (node *Node) inOrder() {
+	if node == nil {
+		return
+	}
+	node.leftChild().inOrder()
+	fmt.Println("Key: " + utils.ToString(node.Data.Key))
+	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	node.rightChild().inOrder()
 }
 
 // isRoot checks to see if Node's parent is nil.
@@ -239,4 +269,26 @@ func (node *Node) subtreeMax(child *Node) *Node {
 	}
 
 	return temp
+}
+
+func (node *Node) checkBalance() int {
+	if node == nil {
+		return 0
+	}
+
+	left := node.leftChild().checkBalance()
+	if left == -1 {
+		return -1
+	}
+
+	right := node.rightChild().checkBalance()
+	if right == -1 {
+		return -1
+	}
+
+	if math.Abs(float64(left-right)) > 1 {
+		return -1
+	} else {
+		return int(1 + math.Max(float64(left), float64(right)))
+	}
 }

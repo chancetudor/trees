@@ -3,7 +3,6 @@ package rbt
 import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
-	"math"
 )
 
 const BLACK = 0
@@ -138,7 +137,9 @@ func (node *Node) getParent() *Node {
 
 // setGrandparent sets a node's grandparent.
 func (node *Node) setGrandparent(grandparent *Node) {
-	node.parent.parent = grandparent
+	if node != nil {
+		node.parent.parent = grandparent
+	}
 }
 
 // grandparent returns a node's grandparent.
@@ -271,24 +272,23 @@ func (node *Node) subtreeMax(child *Node) *Node {
 	return temp
 }
 
-func (node *Node) checkBalance() int {
+// blackHeight returns an int representing the black height from a given node.
+// TODO FIX
+func (node *Node) blackHeight() int {
 	if node == nil {
-		return 0
+		return 1
 	}
 
-	left := node.leftChild().checkBalance()
-	if left == -1 {
+	leftBlackHeight := node.leftChild().blackHeight()
+	rightBlackHeight := node.rightChild().blackHeight()
+
+	if leftBlackHeight != rightBlackHeight {
 		return -1
 	}
 
-	right := node.rightChild().checkBalance()
-	if right == -1 {
-		return -1
+	if node.getColor() == BLACK {
+		leftBlackHeight++
 	}
 
-	if math.Abs(float64(left-right)) > 1 {
-		return -1
-	} else {
-		return int(1 + math.Max(float64(left), float64(right)))
-	}
+	return leftBlackHeight
 }

@@ -1,6 +1,8 @@
 package rbt
 
-import "github.com/emirpasic/gods/utils"
+import (
+	"github.com/emirpasic/gods/utils"
+)
 
 /* Package rbt implements a red-black tree in Go
 * A red-black tree is a Node-based, balanced binary tree data structure which has the following properties:
@@ -162,8 +164,8 @@ func (tree *RBT) Delete(key interface{}) (interface{}, error) {
 		return nil, err
 	}
 	nodeToDeleteKey := nodeToDelete.key()
-
 	tree.setSize(tree.Size() - 1)
+
 	return nodeToDeleteKey, nil
 }
 
@@ -178,14 +180,28 @@ func (tree *RBT) Search(key interface{}) bool {
 	return true
 }
 
-// IsBalanced returns whether the maximum height of any branch
-// is no more than 1 + the minimum height of any branch.
+// IsBalanced returns a bool representing whether
+// all paths from a node to its nil descendants contain
+// the same number of black nodes.
 func (tree *RBT) IsBalanced() bool {
 	if tree.IsEmpty() {
 		return true
 	}
 
-	return tree.Root().checkBalance() != -1
+	if tree.BlackHeight() < 0 {
+		return false
+	}
+
+	return true
+}
+
+// BlackHeight returns an int representing the black height of the tree.
+func (tree *RBT) BlackHeight() int {
+	if tree.IsEmpty() {
+		return 0
+	}
+
+	return tree.Root().blackHeight()
 }
 
 // ReturnNodeValue takes a key and returns the value associated with the key or an error, if there was one.

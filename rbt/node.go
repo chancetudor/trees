@@ -65,11 +65,11 @@ func (node *Node) inOrder() {
 	node.rightChild().inOrder()
 }
 
-// isRoot checks to see if Node's parent is nil.
-// If the parent is nil, the function returns true, as the Node is the tree's root.
+// isRoot checks to see if Node's parent is nil and if its color is black.
+// If both are true, the function returns true, as the Node is the tree's root.
 // Otherwise, the function returns false.
 func (node *Node) isRoot() bool {
-	if node.getParent() == nil {
+	if node.getParent() == nil && node.getColor() == BLACK {
 		return true
 	}
 

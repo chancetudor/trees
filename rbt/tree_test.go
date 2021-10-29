@@ -5,6 +5,7 @@ import (
 	"github.com/emirpasic/gods/utils"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -76,7 +77,7 @@ func TestRBT_InOrderTraversal(t *testing.T) {
 func TestRBT_IsBalanced(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 100; i++ {
 		key := rand.Int()
 		_, err := tree.Insert(key, i)
 		if err != nil {
@@ -101,5 +102,5 @@ func TestRBT_BlackHeight(t *testing.T) {
 	}
 
 	height := tree.BlackHeight()
-	fmt.Println(height)
+	fmt.Println("Black height = " + strconv.Itoa(height))
 }

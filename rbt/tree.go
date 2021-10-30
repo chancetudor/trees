@@ -67,44 +67,39 @@ func (tree *RBT) InOrderTraversal() {
 // The function returns the newly inserted node's key or an error, if there was one.
 func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
 	newNode := NewNode(key, value, -1)
-
-	// tree is empty, so we set the new node as the root and increase the size of the tree by 1.
-	if tree.IsEmpty() {
-		newNode.setColor(BLACK) // Case 0: recolor the root
-		tree.setRoot(newNode)
-		tree.setSize(tree.Size() + 1)
-		return newNode.key(), nil
-	}
-
 	// key already exists in the tree
 	if tree.Search(key) {
 		return nil, NewDuplicateError(key)
 	}
 
-	parent := new(Node)     // this will eventually be set as the newNode's parent
+	var parent *Node        // this will eventually be set as the newNode's parent
 	tempNode := tree.Root() // to determine when we've hit a leaf
 	for tempNode != nil {
 		parent = tempNode
-		compare := tree.comparator(newNode.key(), parent.key())
 		switch {
-		case compare < 0:
+		case tree.comparator(newNode.key(), parent.key()) < 0:
 			tempNode = tempNode.leftChild()
-		case compare > 0:
+		case tree.comparator(newNode.key(), parent.key()) > 0:
 			tempNode = tempNode.rightChild()
 		}
 	}
 
 	newNode.setParent(parent)
-	compare := tree.comparator(newNode.key(), parent.key())
-	switch {
-	case compare < 0:
+	if parent == nil {
+		tree.setRoot(newNode)
+	} else if tree.comparator(newNode.key(), parent.key()) < 0 {
 		parent.setLeftChild(newNode)
-	case compare > 0:
+	} else {
 		parent.setRightChild(newNode)
 	}
-
-	newNode.setRightChild(nil)
-	newNode.setLeftChild(nil)
+	// switch {
+	// case parent == nil:
+	// 	tree.setRoot(newNode)
+	// case tree.comparator(newNode.key(), parent.key()) < 0:
+	// 	parent.setLeftChild(newNode)
+	// case tree.comparator(newNode.key(), parent.key()) > 0:
+	// 	parent.setRightChild(newNode)
+	// }
 	newNode.setColor(RED)
 	tree.insertFixup(newNode)
 	tree.setSize(tree.Size() + 1)
@@ -121,70 +116,37 @@ func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
 // the opposite direction of newNode's placement, then recolor original parent and grandparent.
 func (tree *RBT) insertFixup(node *Node) {
 	for node.getParent().getColor() == RED {
-		uncle, side := node.uncle()
-		if side == RIGHT { // node's parent is a left child, so uncle is on the right side
+		if node.getParent() == node.grandparent().leftChild() {
+			uncle := node.grandparent().rightChild()
 			if uncle.getColor() == RED { // case 1
 				node.getParent().setColor(BLACK)
-				uncle.recolor()
+				uncle.setColor(BLACK)
 				node.grandparent().setColor(RED)
 				node = node.grandparent()
-			} else {
-				if node == node.getParent().rightChild() { // case 2
-					node = node.getParent()
-					tree.leftRotate(node)
-				}
-				// case 3
+			} else if node == node.getParent().rightChild() { // case 2
+				node = node.getParent()
+				tree.leftRotate(node)
+			} else { // case 3
 				node.getParent().setColor(BLACK)
 				node.grandparent().setColor(RED)
 				tree.rightRotate(node.grandparent())
 			}
-			// else if node == node.getParent().rightChild() { // case 2
-			// 	node = node.getParent()
-			// 	tree.leftRotate(node)
-			// } else { // case 3
-			// 	node.getParent().setColor(BLACK)
-			// 	node.grandparent().setColor(RED)
-			// 	tree.rightRotate(node.grandparent())
-			// }
 		} else { // node's parent is a right child, so uncle is on the left side
+			uncle := node.grandparent().leftChild()
 			if uncle.getColor() == RED { // case 1
 				node.getParent().setColor(BLACK)
 				uncle.recolor()
 				node.grandparent().setColor(RED)
 				node = node.grandparent()
-			} else {
-				if node == node.getParent().leftChild() { // case 2
-					node = node.getParent()
-					tree.rightRotate(node)
-				}
+			} else if node == node.getParent().leftChild() { // case 2
+				node = node.getParent()
+				tree.rightRotate(node)
+			} else { // case 3
 				node.getParent().setColor(BLACK)
 				node.grandparent().setColor(RED)
 				tree.leftRotate(node.grandparent())
 			}
-			// else if node == node.getParent().leftChild() { // case 2
-			// 	node = node.getParent()
-			// 	tree.rightRotate(node)
-			// } else { // case 3
-			// 	node.getParent().setColor(BLACK)
-			// 	node.grandparent().setColor(RED)
-			// 	tree.leftRotate(node)
-			// }
 		}
-		// else if side == LEFT {
-		// 	if uncle.getColor() == RED { // case 1
-		// 		node.getParent().setColor(BLACK)
-		// 		uncle.recolor()
-		// 		node.grandparent().setColor(RED)
-		// 		node = node.grandparent()
-		// 	} else if node == node.getParent().leftChild() { // case 2
-		// 		node = node.getParent()
-		// 		tree.rightRotate(node)
-		// 	} else { // case 3
-		// 		node.getParent().setColor(BLACK)
-		// 		node.grandparent().setColor(RED)
-		// 		tree.leftRotate(node)
-		// 	}
-		// }
 	}
 	tree.Root().setColor(BLACK)
 }
@@ -198,19 +160,36 @@ func (tree *RBT) Delete(key interface{}) (interface{}, error) {
 		return nil, err
 	}
 	nodeToDeleteKey := nodeToDelete.key()
+	toDeleteChild := new(Node)
 	toDeleteCopy := nodeToDelete
-	nodeToDeleteOriginalColor := nodeToDelete.getColor()
-	if nodeToDelete.leftChild() == nil {
-		fixUpNode := nodeToDelete.rightChild()
-		tree.replaceSubTree(nodeToDelete, nodeToDelete.rightChild())
-	} else if
+	originalColor := toDeleteCopy.getColor()
 
-	if nodeToDeleteOriginalColor == BLACK {
-		tree.deleteFixup(fixUpNode)
+	if nodeToDelete.leftChild() == nil {
+		toDeleteChild = nodeToDelete.rightChild()
+		tree.replaceSubTree(nodeToDelete, nodeToDelete.rightChild())
+	} else if nodeToDelete.rightChild() == nil {
+		toDeleteChild = nodeToDelete.leftChild()
+		tree.replaceSubTree(nodeToDelete, nodeToDelete.leftChild())
+	} else {
+		toDeleteCopy = nodeToDelete.subtreeMin(nodeToDelete.rightChild())
+		originalColor = toDeleteCopy.getColor()
+		toDeleteChild = toDeleteCopy.rightChild()
+		if toDeleteCopy.getParent() == nodeToDelete {
+			toDeleteChild.setParent(toDeleteCopy)
+		} else {
+			tree.replaceSubTree(toDeleteCopy, toDeleteCopy.rightChild())
+			toDeleteCopy.setRightChild(nodeToDelete.rightChild())
+			toDeleteCopy.rightChild().setParent(toDeleteCopy)
+		}
+		tree.replaceSubTree(nodeToDelete, toDeleteCopy)
+		toDeleteCopy.setLeftChild(nodeToDelete.leftChild())
+		toDeleteCopy.leftChild().setParent(toDeleteCopy)
+		toDeleteCopy.setColor(nodeToDelete.getColor())
 	}
 
-
-
+	if originalColor == BLACK {
+		tree.deleteFixup(toDeleteChild)
+	}
 	tree.setSize(tree.Size() - 1)
 
 	return nodeToDeleteKey, nil
@@ -239,15 +218,6 @@ func (tree *RBT) IsBalanced() bool {
 	default:
 		return true
 	}
-	// if tree.IsEmpty() {
-	// 	return true
-	// }
-	//
-	// if tree.BlackHeight() < 0 {
-	// 	return false
-	// }
-	//
-	// return true
 }
 
 // BlackHeight returns an int representing the black height of the tree.
@@ -316,9 +286,10 @@ func (tree *RBT) leftRotate(node *Node) {
 		newParent.leftChild().setParent(node)
 	}
 	newParent.setParent(node.getParent())
-	switch {
-	case node.isRoot():
+	if node.getParent() == nil {
 		tree.setRoot(newParent)
+	}
+	switch {
 	case node == node.getParent().leftChild():
 		node.getParent().setLeftChild(newParent)
 	default:
@@ -343,51 +314,103 @@ func (tree *RBT) rightRotate(node *Node) {
 		newParent.rightChild().setParent(node)
 	}
 	newParent.setParent(node.getParent())
-	switch {
-	case node.isRoot():
+	if node.getParent() == nil {
 		tree.setRoot(newParent)
+	}
+	switch {
 	case node == node.getParent().rightChild():
 		node.getParent().setRightChild(newParent)
 	default:
 		node.getParent().setLeftChild(newParent)
 	}
-	// if node.isRoot() {
-	// 	tree.setRoot(newParent)
-	// } else if node == node.getParent().rightChild() {
-	// 	node.getParent().setRightChild(newParent)
-	// } else {
-	// 	node.getParent().setLeftChild(newParent)
-	// }
 	newParent.setRightChild(node)
 	node.setParent(newParent)
 }
 
-// replaceSubTree
+// replaceSubTree replaces one subtree as a child of its parent with
+// another subtree. When replaceSubTree replaces the subtree rooted at node u with
+// the subtree rooted at node v, node u’s parent becomes node v’s parent, and u’s
+// parent ends up having as its appropriate child.
 func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
-	parent := toDelete.getParent()
+	//parent := toDelete.getParent()
 	switch {
-	case toDelete.isRoot():
+	case toDelete.getParent() == nil:
 		tree.setRoot(replacement)
-	case toDelete == parent.leftChild(): // node to delete is left child
-		parent.setLeftChild(replacement)
+	case toDelete == toDelete.getParent().leftChild(): // node to delete is left child
+		toDelete.getParent().setLeftChild(replacement)
 	default: // node to delete is right child
-		parent.setRightChild(replacement)
+		toDelete.getParent().setRightChild(replacement)
 	}
 	replacement.setParent(toDelete.getParent())
+	// toDelete.clear()
+}
+
+// deleteFixup maintains the invariants of the red-black tree after deletion.
+func (tree *RBT) deleteFixup(child *Node) {
+	for child != tree.Root() && child.getColor() == BLACK {
+		if child == child.getParent().leftChild() {
+			childSibling := child.getParent().rightChild()
+			if childSibling.getColor() == RED {
+				childSibling.recolor()
+				child.getParent().setColor(RED)
+				tree.leftRotate(child.getParent())
+				childSibling = child.getParent().rightChild()
+			}
+			if childSibling.leftChild().getColor() == BLACK && childSibling.rightChild().getColor() == BLACK {
+				childSibling.setColor(RED)
+				child = child.getParent()
+			} else if childSibling.rightChild().getColor() == BLACK {
+				childSibling.leftChild().setColor(BLACK)
+				childSibling.setColor(RED)
+				tree.rightRotate(childSibling)
+				childSibling = child.getParent().rightChild()
+			}
+			childSibling.setColor(child.getParent().getColor())
+			child.getParent().setColor(BLACK)
+			childSibling.rightChild().setColor(BLACK)
+			tree.leftRotate(child.getParent())
+			child = tree.Root()
+		} else {
+			childSibling := child.getParent().leftChild()
+			if childSibling.getColor() == RED {
+				childSibling.recolor()
+				child.getParent().setColor(RED)
+				tree.rightRotate(child.getParent())
+				childSibling = child.getParent().leftChild()
+			}
+			if childSibling.rightChild().getColor() == BLACK && childSibling.leftChild().getColor() == BLACK {
+				childSibling.setColor(RED)
+				child = child.getParent()
+			} else if childSibling.leftChild().getColor() == BLACK {
+				childSibling.rightChild().setColor(BLACK)
+				childSibling.setColor(RED)
+				tree.leftRotate(childSibling)
+				childSibling = child.getParent().leftChild()
+			}
+			childSibling.setColor(child.getParent().getColor())
+			child.getParent().setColor(BLACK)
+			childSibling.leftChild().setColor(BLACK)
+			tree.rightRotate(child.getParent())
+			child = tree.Root()
+		}
+		child.setColor(BLACK)
+	}
 }
 
 // findNode takes a key and returns the node associated with that key.
 // Returns nil and an error if no node exists.
 func (tree *RBT) findNode(key interface{}) (*Node, error) {
+	// if tree.IsEmpty() {
+	// 	return nil, NewNilNodeError(key)
+	// }
 	tempNode := tree.Root()
 	for tempNode != nil {
-		compare := tree.comparator(key, tempNode.key())
 		switch {
-		case compare < 0:
+		case tree.comparator(key, tempNode.key()) < 0: // left
 			tempNode = tempNode.leftChild()
-		case compare > 0:
+		case tree.comparator(key, tempNode.key()) > 0: // right
 			tempNode = tempNode.rightChild()
-		case compare == 0:
+		case tree.comparator(key, tempNode.key()) == 0: // match
 			return tempNode, nil
 		}
 	}

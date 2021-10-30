@@ -200,22 +200,34 @@ func (node *Node) clear() {
 
 // setKey takes a key and sets it as the key for a node.
 func (node *Node) setKey(key interface{}) {
-	node.Data.Key = key
+	if node != nil {
+		node.Data.Key = key
+	}
 }
 
 // key returns the value of a node.
 func (node *Node) key() interface{} {
-	return node.Data.Key
+	if node != nil {
+		return node.Data.Key
+	}
+
+	return nil
 }
 
 // setValue takes a value and sets it as the value for a node.
 func (node *Node) setValue(value interface{}) {
-	node.Data.Value = value
+	if node != nil {
+		node.Data.Value = value
+	}
 }
 
 // value returns the value of a node.
 func (node *Node) value() interface{} {
-	return node.Data.Value
+	if node != nil {
+		return node.Data.Value
+	}
+
+	return nil
 }
 
 // successor returns the node with the smallest key greater than the node the method is called on

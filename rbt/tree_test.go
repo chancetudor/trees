@@ -13,14 +13,14 @@ func TestRBT_Insert(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 100; i++ {
-		// key := rand.Int()
-		got, err := tree.Insert(i, i)
+		key := rand.Int()
+		got, err := tree.Insert(key, i)
 		if err != nil {
 			t.Errorf("Insert() error = %v", err)
 			return
 		}
-		if !reflect.DeepEqual(got, i) {
-			t.Errorf("Insert() got = %v, want %v", got, i)
+		if !reflect.DeepEqual(got, key) {
+			t.Errorf("Insert() got = %v, want %v", got, key)
 		}
 	}
 

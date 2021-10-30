@@ -1,6 +1,7 @@
 package rbt
 
 import (
+	"fmt"
 	"github.com/emirpasic/gods/utils"
 )
 
@@ -53,12 +54,20 @@ func NewWithStringComparator() *RBT {
 // DepthFirstTraversal (pre-order traversal) traverses the binary search tree by printing the root node,
 // then recursively visiting the left and the right nodes of the current node.
 func (tree *RBT) DepthFirstTraversal() {
-	tree.Root().dfs()
+	if !tree.IsEmpty() {
+		tree.Root().dfs()
+	}
+
+	fmt.Println("Empty tree: []")
 }
 
 // InOrderTraversal prints every node's value in order from smallest to greatest.
 func (tree *RBT) InOrderTraversal() {
-	tree.Root().inOrder()
+	if !tree.IsEmpty() {
+		tree.Root().inOrder()
+	}
+
+	fmt.Println("Empty tree: []")
 }
 
 // Insert takes a key and a value of type interface, and inserts a new Node with that key and value.
@@ -160,7 +169,7 @@ func (tree *RBT) Delete(key interface{}) (interface{}, error) {
 		return nil, err
 	}
 	nodeToDeleteKey := nodeToDelete.key()
-	toDeleteChild := new(Node)
+	var toDeleteChild *Node
 	toDeleteCopy := nodeToDelete
 	originalColor := toDeleteCopy.getColor()
 
@@ -193,6 +202,77 @@ func (tree *RBT) Delete(key interface{}) (interface{}, error) {
 	tree.setSize(tree.Size() - 1)
 
 	return nodeToDeleteKey, nil
+}
+
+// replaceSubTree replaces one subtree as a child of its parent with
+// another subtree. When replaceSubTree replaces the subtree rooted at node u with
+// the subtree rooted at node v, node u’s parent becomes node v’s parent, and u’s
+// parent ends up having as its appropriate child.
+func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
+	if toDelete.isRoot() {
+		tree.setRoot(replacement)
+	}
+	switch {
+	// case toDelete.getParent() == nil:
+	// 	tree.setRoot(replacement)
+	case toDelete == toDelete.getParent().leftChild(): // node to delete is left child
+		toDelete.getParent().setLeftChild(replacement)
+	default: // node to delete is right child
+		toDelete.getParent().setRightChild(replacement)
+	}
+	replacement.setParent(toDelete.getParent())
+}
+
+// deleteFixup maintains the invariants of the red-black tree after deletion.
+func (tree *RBT) deleteFixup(child *Node) {
+	for child != tree.Root() && child.getColor() == BLACK {
+		if child == child.getParent().leftChild() {
+			childSibling := child.getParent().rightChild()
+			if childSibling.getColor() == RED {
+				childSibling.recolor()
+				child.getParent().setColor(RED)
+				tree.leftRotate(child.getParent())
+				childSibling = child.getParent().rightChild()
+			}
+			if childSibling.leftChild().getColor() == BLACK && childSibling.rightChild().getColor() == BLACK {
+				childSibling.setColor(RED)
+				child = child.getParent()
+			} else if childSibling.rightChild().getColor() == BLACK {
+				childSibling.leftChild().setColor(BLACK)
+				childSibling.setColor(RED)
+				tree.rightRotate(childSibling)
+				childSibling = child.getParent().rightChild()
+			}
+			childSibling.setColor(child.getParent().getColor())
+			child.getParent().setColor(BLACK)
+			childSibling.rightChild().setColor(BLACK)
+			tree.leftRotate(child.getParent())
+			child = tree.Root()
+		} else {
+			childSibling := child.getParent().leftChild()
+			if childSibling.getColor() == RED {
+				childSibling.recolor()
+				child.getParent().setColor(RED)
+				tree.rightRotate(child.getParent())
+				childSibling = child.getParent().leftChild()
+			}
+			if childSibling.rightChild().getColor() == BLACK && childSibling.leftChild().getColor() == BLACK {
+				childSibling.setColor(RED)
+				child = child.getParent()
+			} else if childSibling.leftChild().getColor() == BLACK {
+				childSibling.rightChild().setColor(BLACK)
+				childSibling.setColor(RED)
+				tree.leftRotate(childSibling)
+				childSibling = child.getParent().leftChild()
+			}
+			childSibling.setColor(child.getParent().getColor())
+			child.getParent().setColor(BLACK)
+			childSibling.leftChild().setColor(BLACK)
+			tree.rightRotate(child.getParent())
+			child = tree.Root()
+		}
+		child.setColor(BLACK)
+	}
 }
 
 // Search takes a key and searches for the key in the tree.
@@ -327,82 +407,9 @@ func (tree *RBT) rightRotate(node *Node) {
 	node.setParent(newParent)
 }
 
-// replaceSubTree replaces one subtree as a child of its parent with
-// another subtree. When replaceSubTree replaces the subtree rooted at node u with
-// the subtree rooted at node v, node u’s parent becomes node v’s parent, and u’s
-// parent ends up having as its appropriate child.
-func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
-	//parent := toDelete.getParent()
-	switch {
-	case toDelete.getParent() == nil:
-		tree.setRoot(replacement)
-	case toDelete == toDelete.getParent().leftChild(): // node to delete is left child
-		toDelete.getParent().setLeftChild(replacement)
-	default: // node to delete is right child
-		toDelete.getParent().setRightChild(replacement)
-	}
-	replacement.setParent(toDelete.getParent())
-	// toDelete.clear()
-}
-
-// deleteFixup maintains the invariants of the red-black tree after deletion.
-func (tree *RBT) deleteFixup(child *Node) {
-	for child != tree.Root() && child.getColor() == BLACK {
-		if child == child.getParent().leftChild() {
-			childSibling := child.getParent().rightChild()
-			if childSibling.getColor() == RED {
-				childSibling.recolor()
-				child.getParent().setColor(RED)
-				tree.leftRotate(child.getParent())
-				childSibling = child.getParent().rightChild()
-			}
-			if childSibling.leftChild().getColor() == BLACK && childSibling.rightChild().getColor() == BLACK {
-				childSibling.setColor(RED)
-				child = child.getParent()
-			} else if childSibling.rightChild().getColor() == BLACK {
-				childSibling.leftChild().setColor(BLACK)
-				childSibling.setColor(RED)
-				tree.rightRotate(childSibling)
-				childSibling = child.getParent().rightChild()
-			}
-			childSibling.setColor(child.getParent().getColor())
-			child.getParent().setColor(BLACK)
-			childSibling.rightChild().setColor(BLACK)
-			tree.leftRotate(child.getParent())
-			child = tree.Root()
-		} else {
-			childSibling := child.getParent().leftChild()
-			if childSibling.getColor() == RED {
-				childSibling.recolor()
-				child.getParent().setColor(RED)
-				tree.rightRotate(child.getParent())
-				childSibling = child.getParent().leftChild()
-			}
-			if childSibling.rightChild().getColor() == BLACK && childSibling.leftChild().getColor() == BLACK {
-				childSibling.setColor(RED)
-				child = child.getParent()
-			} else if childSibling.leftChild().getColor() == BLACK {
-				childSibling.rightChild().setColor(BLACK)
-				childSibling.setColor(RED)
-				tree.leftRotate(childSibling)
-				childSibling = child.getParent().leftChild()
-			}
-			childSibling.setColor(child.getParent().getColor())
-			child.getParent().setColor(BLACK)
-			childSibling.leftChild().setColor(BLACK)
-			tree.rightRotate(child.getParent())
-			child = tree.Root()
-		}
-		child.setColor(BLACK)
-	}
-}
-
 // findNode takes a key and returns the node associated with that key.
 // Returns nil and an error if no node exists.
 func (tree *RBT) findNode(key interface{}) (*Node, error) {
-	// if tree.IsEmpty() {
-	// 	return nil, NewNilNodeError(key)
-	// }
 	tempNode := tree.Root()
 	for tempNode != nil {
 		switch {

@@ -285,7 +285,6 @@ func (node *Node) subtreeMax(child *Node) *Node {
 }
 
 // blackHeight returns an int representing the black height from a given node.
-// TODO FIX
 func (node *Node) blackHeight() int {
 	if node == nil {
 		return 1

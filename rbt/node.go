@@ -47,8 +47,20 @@ func (node *Node) dfs() {
 	if node == nil {
 		return
 	}
-	fmt.Println("Key: " + utils.ToString(node.Data.Key))
-	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	if node.getParent() == nil {
+		fmt.Println("ROOT")
+	}
+	color := node.getColor()
+	switch {
+	case color == RED:
+		fmt.Println("Key = " + utils.ToString(node.Data.Key) +
+			" | " + "Value = " + utils.ToString(node.Data.Value) +
+			" | " + "Color = RED")
+	case color == BLACK:
+		fmt.Println("Key = " + utils.ToString(node.Data.Key) +
+			" | " + "Value = " + utils.ToString(node.Data.Value) +
+			" | " + "Color = BLACK")
+	}
 	node.leftChild().dfs()
 	node.rightChild().dfs()
 }
@@ -60,8 +72,20 @@ func (node *Node) inOrder() {
 		return
 	}
 	node.leftChild().inOrder()
-	fmt.Println("Key: " + utils.ToString(node.Data.Key))
-	fmt.Println("Value: " + utils.ToString(node.Data.Value))
+	if node.getParent() == nil {
+		fmt.Println("ROOT")
+	}
+	color := node.getColor()
+	switch {
+	case color == RED:
+		fmt.Println("Key = " + utils.ToString(node.Data.Key) +
+			" | " + "Value = " + utils.ToString(node.Data.Value) +
+			" | " + "Color = RED")
+	case color == BLACK:
+		fmt.Println("Key = " + utils.ToString(node.Data.Key) +
+			" | " + "Value = " + utils.ToString(node.Data.Value) +
+			" | " + "Color = BLACK")
+	}
 	node.rightChild().inOrder()
 }
 
@@ -124,6 +148,7 @@ func (node *Node) setParent(parent *Node) {
 	if node != nil {
 		node.parent = parent
 	}
+	// node.parent = parent
 }
 
 // getParent returns a node's parent.
@@ -140,6 +165,7 @@ func (node *Node) setGrandparent(grandparent *Node) {
 	if node != nil {
 		node.parent.parent = grandparent
 	}
+	// node.parent.parent = grandparent
 }
 
 // grandparent returns a node's grandparent.
@@ -234,7 +260,8 @@ func (node *Node) value() interface{} {
 func (node *Node) successor() *Node {
 	// successor is the furthest left child of the right subtree
 	if node.rightChild() != nil {
-		return node.subtreeMin(node.rightChild())
+		// return node.subtreeMin(node.rightChild())
+		return node.rightChild().subtreeMin()
 	}
 	// otherwise, work up and to the right of the subtrees
 	parent := node.getParent()
@@ -265,8 +292,8 @@ func (node *Node) predecessor() *Node {
 }
 
 // subtreeMin returns the furthest left child of a subtree
-func (node *Node) subtreeMin(child *Node) *Node {
-	temp := child
+func (node *Node) subtreeMin( /*child *Node*/ ) *Node {
+	temp := node
 	for temp.leftChild() != nil {
 		temp = temp.leftChild()
 	}

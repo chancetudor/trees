@@ -34,8 +34,8 @@ func TestRBT_Delete(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	keyVals := make(map[interface{}]int)
 	for i := 0; i < 100; i++ {
-		// key := rand.Int()
-		got, err := tree.Insert(i, i)
+		key := rand.Int()
+		got, err := tree.Insert(key, i)
 		keyVals[got] = i
 		if err != nil {
 			t.Errorf("Insert() error = %v", err)
@@ -43,45 +43,14 @@ func TestRBT_Delete(t *testing.T) {
 		}
 	}
 
-	if tree.Size() != 100 {
-		t.Errorf("Tree does not have correct size")
-		return
-	}
-
-	// tree.InOrderTraversal()
-
-	// for key, _ := range keyVals {
-	// 	deletedKey, err := tree.Delete(key)
-	// 	if err != nil {
-	// 		t.Errorf("Delete() error = %v", err)
-	// 		if !tree.Search(key) {
-	// 			t.Errorf("Search() error = %v", err)
-	// 			return
-	// 		}
-	// 	}
-	// 	if !reflect.DeepEqual(deletedKey, key) {
-	// 		t.Errorf("Delete() got = %v, want %v", deletedKey, key)
-	// 	}
-	// 	if !tree.IsBalanced() {
-	// 		t.Errorf("Tree is not balanced after a deletion")
-	// 	}
-	// }
-
-	if tree.Root() == nil {
-		t.Errorf("Root is nil?")
-	}
-
-	for i := 0; i < 100; i++ {
-		deletedKey, err := tree.Delete(i)
+	for key, _ := range keyVals {
+		fmt.Printf("deleting key: %v\n", key)
+		deletedKey, err := tree.Delete(key)
 		if err != nil {
 			t.Errorf("Delete() error = %v", err)
-			if !tree.Search(i) {
-				t.Errorf("Search() error = %v", err)
-				//return
-			}
 		}
-		if !reflect.DeepEqual(deletedKey, i) {
-			t.Errorf("Delete() got = %v, want %v", deletedKey, i)
+		if !reflect.DeepEqual(deletedKey, key) {
+			t.Errorf("Delete() got = %v, want %v", deletedKey, key)
 		}
 		if !tree.IsBalanced() {
 			t.Errorf("Tree is not balanced after a deletion")

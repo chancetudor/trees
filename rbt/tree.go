@@ -56,6 +56,7 @@ func NewWithStringComparator() *RBT {
 func (tree *RBT) DepthFirstTraversal() {
 	if !tree.IsEmpty() {
 		tree.Root().dfs()
+		return
 	}
 
 	fmt.Println("Empty tree: []")
@@ -65,6 +66,7 @@ func (tree *RBT) DepthFirstTraversal() {
 func (tree *RBT) InOrderTraversal() {
 	if !tree.IsEmpty() {
 		tree.Root().inOrder()
+		return
 	}
 
 	fmt.Println("Empty tree: []")
@@ -101,14 +103,6 @@ func (tree *RBT) Insert(key, value interface{}) (interface{}, error) {
 	} else {
 		parent.setRightChild(newNode)
 	}
-	// switch {
-	// case parent == nil:
-	// 	tree.setRoot(newNode)
-	// case tree.comparator(newNode.key(), parent.key()) < 0:
-	// 	parent.setLeftChild(newNode)
-	// case tree.comparator(newNode.key(), parent.key()) > 0:
-	// 	parent.setRightChild(newNode)
-	// }
 	newNode.setColor(RED)
 	tree.insertFixup(newNode)
 	tree.setSize(tree.Size() + 1)
@@ -163,41 +157,41 @@ func (tree *RBT) insertFixup(node *Node) {
 // Delete takes a key, removes the node from the tree, and decrements the size of the tree.
 // The function returns the key of the deleted node and an error, if there was one.
 func (tree *RBT) Delete(key interface{}) (interface{}, error) {
-	nodeToDelete, err := tree.findNode(key)
+	z, err := tree.findNode(key)
 	// node with key does not exist
 	if err != nil {
 		return nil, err
 	}
-	nodeToDeleteKey := nodeToDelete.key()
-	var toDeleteChild *Node
-	toDeleteCopy := nodeToDelete
-	originalColor := toDeleteCopy.getColor()
+	nodeToDeleteKey := z.key()
 
-	if nodeToDelete.leftChild() == nil {
-		toDeleteChild = nodeToDelete.rightChild()
-		tree.replaceSubTree(nodeToDelete, nodeToDelete.rightChild())
-	} else if nodeToDelete.rightChild() == nil {
-		toDeleteChild = nodeToDelete.leftChild()
-		tree.replaceSubTree(nodeToDelete, nodeToDelete.leftChild())
+	y := z
+	originalColor := y.getColor()
+	var x *Node
+	if z.leftChild() == nil {
+		x = z.rightChild()
+		tree.replaceSubTree(z, z.rightChild())
+	} else if z.rightChild() == nil {
+		x = z.leftChild()
+		tree.replaceSubTree(z, z.leftChild())
 	} else {
-		toDeleteCopy = nodeToDelete.subtreeMin(nodeToDelete.rightChild())
-		originalColor = toDeleteCopy.getColor()
-		toDeleteChild = toDeleteCopy.rightChild()
-		if toDeleteCopy.getParent() == nodeToDelete {
-			toDeleteChild.setParent(toDeleteCopy)
+		y = z.rightChild().subtreeMin()
+		originalColor = y.getColor()
+		x = y.rightChild()
+		if y.getParent() == z {
+			x.setParent(y)
 		} else {
-			tree.replaceSubTree(toDeleteCopy, toDeleteCopy.rightChild())
-			toDeleteCopy.setRightChild(nodeToDelete.rightChild())
-			toDeleteCopy.rightChild().setParent(toDeleteCopy)
+			tree.replaceSubTree(y, y.rightChild())
+			y.setRightChild(z.rightChild())
+			y.rightChild().setParent(y)
 		}
-		tree.replaceSubTree(nodeToDelete, toDeleteCopy)
-		toDeleteCopy.setLeftChild(nodeToDelete.leftChild())
-		toDeleteCopy.leftChild().setParent(toDeleteCopy)
-		toDeleteCopy.setColor(nodeToDelete.getColor())
+		tree.replaceSubTree(z, y)
+		y.setLeftChild(z.leftChild())
+		y.leftChild().setParent(y)
+		y.setColor(z.getColor())
 	}
 
 	if originalColor == BLACK {
-		tree.deleteFixup(toDeleteChild)
+		tree.deleteFixup(x)
 	}
 	tree.setSize(tree.Size() - 1)
 
@@ -209,12 +203,9 @@ func (tree *RBT) Delete(key interface{}) (interface{}, error) {
 // the subtree rooted at node v, node u’s parent becomes node v’s parent, and u’s
 // parent ends up having as its appropriate child.
 func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
-	if toDelete.isRoot() {
-		tree.setRoot(replacement)
-	}
 	switch {
-	// case toDelete.getParent() == nil:
-	// 	tree.setRoot(replacement)
+	case toDelete == tree.Root():
+		tree.setRoot(replacement)
 	case toDelete == toDelete.getParent().leftChild(): // node to delete is left child
 		toDelete.getParent().setLeftChild(replacement)
 	default: // node to delete is right child
@@ -224,55 +215,109 @@ func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
 }
 
 // deleteFixup maintains the invariants of the red-black tree after deletion.
-func (tree *RBT) deleteFixup(child *Node) {
-	for child != tree.Root() && child.getColor() == BLACK {
-		if child == child.getParent().leftChild() {
-			childSibling := child.getParent().rightChild()
-			if childSibling.getColor() == RED {
-				childSibling.recolor()
-				child.getParent().setColor(RED)
-				tree.leftRotate(child.getParent())
-				childSibling = child.getParent().rightChild()
+func (tree *RBT) deleteFixup(x *Node) {
+	for x != tree.Root() && x.getColor() == BLACK {
+		switch {
+		case x == x.getParent().leftChild():
+			w := x.getParent().rightChild()
+			if w.getColor() == RED {
+				w.recolor()
+				x.getParent().setColor(RED)
+				tree.leftRotate(x.getParent())
+				w = x.getParent().rightChild()
 			}
-			if childSibling.leftChild().getColor() == BLACK && childSibling.rightChild().getColor() == BLACK {
-				childSibling.setColor(RED)
-				child = child.getParent()
-			} else if childSibling.rightChild().getColor() == BLACK {
-				childSibling.leftChild().setColor(BLACK)
-				childSibling.setColor(RED)
-				tree.rightRotate(childSibling)
-				childSibling = child.getParent().rightChild()
+			if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
+				w.setColor(RED)
+				x = x.getParent()
+			} else {
+				if w.rightChild().getColor() == BLACK {
+					w.leftChild().setColor(BLACK)
+					w.setColor(RED)
+					tree.rightRotate(w)
+					w = x.getParent().rightChild()
+				}
+				w.setColor(x.getParent().getColor())
+				x.getParent().setColor(BLACK)
+				w.rightChild().setColor(BLACK)
+				tree.leftRotate(x.getParent())
+				x = tree.Root()
 			}
-			childSibling.setColor(child.getParent().getColor())
-			child.getParent().setColor(BLACK)
-			childSibling.rightChild().setColor(BLACK)
-			tree.leftRotate(child.getParent())
-			child = tree.Root()
-		} else {
-			childSibling := child.getParent().leftChild()
-			if childSibling.getColor() == RED {
-				childSibling.recolor()
-				child.getParent().setColor(RED)
-				tree.rightRotate(child.getParent())
-				childSibling = child.getParent().leftChild()
+		default:
+			w := x.getParent().leftChild()
+			if w.getColor() == RED {
+				w.recolor()
+				x.getParent().setColor(RED)
+				tree.rightRotate(x.getParent())
+				w = x.getParent().leftChild()
 			}
-			if childSibling.rightChild().getColor() == BLACK && childSibling.leftChild().getColor() == BLACK {
-				childSibling.setColor(RED)
-				child = child.getParent()
-			} else if childSibling.leftChild().getColor() == BLACK {
-				childSibling.rightChild().setColor(BLACK)
-				childSibling.setColor(RED)
-				tree.leftRotate(childSibling)
-				childSibling = child.getParent().leftChild()
+			if w.rightChild().getColor() == BLACK && w.leftChild().getColor() == BLACK {
+				w.setColor(RED)
+				x = x.getParent()
+			} else {
+				if w.leftChild().getColor() == BLACK {
+					w.rightChild().setColor(BLACK)
+					w.setColor(RED)
+					tree.leftRotate(w)
+					w = x.getParent().leftChild()
+				}
+				w.setColor(x.getParent().getColor())
+				x.getParent().setColor(BLACK)
+				w.leftChild().setColor(BLACK)
+				tree.rightRotate(x.getParent())
+				x = tree.Root()
 			}
-			childSibling.setColor(child.getParent().getColor())
-			child.getParent().setColor(BLACK)
-			childSibling.leftChild().setColor(BLACK)
-			tree.rightRotate(child.getParent())
-			child = tree.Root()
 		}
-		child.setColor(BLACK)
+		// if x == x.getParent().leftChild() {
+		// 	w := x.getParent().rightChild()
+		// 	if w.getColor() == RED {
+		// 		w.recolor()
+		// 		x.getParent().setColor(RED)
+		// 		tree.leftRotate(x.getParent())
+		// 		w = x.getParent().rightChild()
+		// 	}
+		// 	if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
+		// 		w.setColor(RED)
+		// 		x = x.getParent()
+		// 	} else {
+		// 		if w.rightChild().getColor() == BLACK {
+		// 			w.leftChild().setColor(BLACK)
+		// 			w.setColor(RED)
+		// 			tree.rightRotate(w)
+		// 			w = x.getParent().rightChild()
+		// 		}
+		// 		w.setColor(x.getParent().getColor())
+		// 		x.getParent().setColor(BLACK)
+		// 		w.rightChild().setColor(BLACK)
+		// 		tree.leftRotate(x.getParent())
+		// 		x = tree.Root()
+		// 	}
+		// } else {
+		// 	w := x.getParent().leftChild()
+		// 	if w.getColor() == RED {
+		// 		w.recolor()
+		// 		x.getParent().setColor(RED)
+		// 		tree.rightRotate(x.getParent())
+		// 		w = x.getParent().leftChild()
+		// 	}
+		// 	if w.rightChild().getColor() == BLACK && w.leftChild().getColor() == BLACK {
+		// 		w.setColor(RED)
+		// 		x = x.getParent()
+		// 	} else {
+		// 		if w.leftChild().getColor() == BLACK {
+		// 			w.rightChild().setColor(BLACK)
+		// 			w.setColor(RED)
+		// 			tree.leftRotate(w)
+		// 			w = x.getParent().leftChild()
+		// 		}
+		// 		w.setColor(x.getParent().getColor())
+		// 		x.getParent().setColor(BLACK)
+		// 		w.leftChild().setColor(BLACK)
+		// 		tree.rightRotate(x.getParent())
+		// 		x = tree.Root()
+		// 	}
+		// }
 	}
+	x.setColor(BLACK)
 }
 
 // Search takes a key and searches for the key in the tree.

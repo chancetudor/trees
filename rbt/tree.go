@@ -157,41 +157,45 @@ func (tree *RBT) insertFixup(node *Node) {
 // Delete takes a key, removes the node from the tree, and decrements the size of the tree.
 // The function returns the key of the deleted node and an error, if there was one.
 func (tree *RBT) Delete(key interface{}) (interface{}, error) {
-	z, err := tree.findNode(key)
+	nodeToDelete, err := tree.findNode(key)
 	// node with key does not exist
 	if err != nil {
 		return nil, err
 	}
-	nodeToDeleteKey := z.key()
+	nodeToDeleteKey := nodeToDelete.key()
 
-	y := z
-	originalColor := y.getColor()
-	var x *Node
-	if z.leftChild() == nil {
-		x = z.rightChild()
-		tree.replaceSubTree(z, z.rightChild())
-	} else if z.rightChild() == nil {
-		x = z.leftChild()
-		tree.replaceSubTree(z, z.leftChild())
+	var sibling, successor *Node
+	if nodeToDelete.leftChild() != nil && nodeToDelete.rightChild() != nil {
+		successor = nodeToDelete.successor()
 	} else {
-		y = z.rightChild().subtreeMin()
-		originalColor = y.getColor()
-		x = y.rightChild()
-		if y.getParent() == z {
-			x.setParent(y)
-		} else {
-			tree.replaceSubTree(y, y.rightChild())
-			y.setRightChild(z.rightChild())
-			y.rightChild().setParent(y)
-		}
-		tree.replaceSubTree(z, y)
-		y.setLeftChild(z.leftChild())
-		y.leftChild().setParent(y)
-		y.setColor(z.getColor())
+		successor = nodeToDelete
 	}
 
-	if originalColor == BLACK {
-		tree.deleteFixup(x)
+	if successor.leftChild() != nil {
+		sibling = successor.leftChild()
+	} else {
+		sibling = successor.rightChild()
+	}
+
+	newParent := successor.getParent()
+	if sibling != nil {
+		sibling.setParent(newParent)
+	}
+	if successor.getParent() == nil {
+		tree.setRoot(sibling)
+	} else if successor == successor.getParent().leftChild() {
+		successor.getParent().setLeftChild(sibling)
+	} else {
+		successor.getParent().setRightChild(sibling)
+	}
+
+	if successor != nodeToDelete {
+		nodeToDelete.setKey(successor.key())
+		nodeToDelete.setValue(successor.value())
+	}
+
+	if successor.getColor() == BLACK {
+		tree.deleteFixup(sibling, newParent)
 	}
 	tree.setSize(tree.Size() - 1)
 
@@ -215,109 +219,132 @@ func (tree *RBT) replaceSubTree(toDelete *Node, replacement *Node) {
 }
 
 // deleteFixup maintains the invariants of the red-black tree after deletion.
-func (tree *RBT) deleteFixup(x *Node) {
+// func (tree *RBT) deleteFixup(x *Node) {
+// 	for x != tree.Root() && x.getColor() == BLACK {
+// 		switch {
+// 		case x == x.getParent().leftChild():
+// 			w := x.getParent().rightChild()
+// 			if w.getColor() == RED {
+// 				w.recolor()
+// 				x.getParent().setColor(RED)
+// 				tree.leftRotate(x.getParent())
+// 				w = x.getParent().rightChild()
+// 			}
+// 			if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
+// 				w.setColor(RED)
+// 				x = x.getParent()
+// 			} else {
+// 				if w.rightChild().getColor() == BLACK {
+// 					w.leftChild().setColor(BLACK)
+// 					w.setColor(RED)
+// 					tree.rightRotate(w)
+// 					w = x.getParent().rightChild()
+// 				}
+// 				w.setColor(x.getParent().getColor())
+// 				x.getParent().setColor(BLACK)
+// 				w.rightChild().setColor(BLACK)
+// 				tree.leftRotate(x.getParent())
+// 				x = tree.Root()
+// 			}
+// 		default:
+// 			w := x.getParent().leftChild()
+// 			if w.getColor() == RED {
+// 				w.recolor()
+// 				x.getParent().setColor(RED)
+// 				tree.rightRotate(x.getParent())
+// 				w = x.getParent().leftChild()
+// 			}
+// 			if w.rightChild().getColor() == BLACK && w.leftChild().getColor() == BLACK {
+// 				w.setColor(RED)
+// 				x = x.getParent()
+// 			} else {
+// 				if w.leftChild().getColor() == BLACK {
+// 					w.rightChild().setColor(BLACK)
+// 					w.setColor(RED)
+// 					tree.leftRotate(w)
+// 					w = x.getParent().leftChild()
+// 				}
+// 				w.setColor(x.getParent().getColor())
+// 				x.getParent().setColor(BLACK)
+// 				w.leftChild().setColor(BLACK)
+// 				tree.rightRotate(x.getParent())
+// 				x = tree.Root()
+// 			}
+// 		}
+// 	}
+// 	x.setColor(BLACK)
+// }
+
+// deleteFixup maintains the invariants of the red-black tree after deletion.
+func (tree *RBT) deleteFixup(x, parent *Node) {
+	var w *Node
+
 	for x != tree.Root() && x.getColor() == BLACK {
+		if x != nil {
+			parent = x.getParent()
+		}
 		switch {
-		case x == x.getParent().leftChild():
-			w := x.getParent().rightChild()
+		case x == parent.leftChild():
+			w = parent.rightChild()
 			if w.getColor() == RED {
-				w.recolor()
-				x.getParent().setColor(RED)
-				tree.leftRotate(x.getParent())
-				w = x.getParent().rightChild()
+				w.setColor(BLACK)
+				parent.setColor(RED)
+				tree.leftRotate(parent)
+				w = parent.rightChild()
 			}
 			if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
 				w.setColor(RED)
-				x = x.getParent()
+				x = parent
 			} else {
 				if w.rightChild().getColor() == BLACK {
-					w.leftChild().setColor(BLACK)
+					if w.leftChild() != nil {
+						w.leftChild().setColor(BLACK)
+					}
 					w.setColor(RED)
 					tree.rightRotate(w)
-					w = x.getParent().rightChild()
+					w = parent.rightChild()
 				}
-				w.setColor(x.getParent().getColor())
-				x.getParent().setColor(BLACK)
-				w.rightChild().setColor(BLACK)
-				tree.leftRotate(x.getParent())
+				w.setColor(parent.getColor())
+				parent.setColor(BLACK)
+				if w.rightChild() != nil {
+					w.rightChild().setColor(BLACK)
+				}
+				tree.leftRotate(parent)
 				x = tree.Root()
 			}
-		default:
-			w := x.getParent().leftChild()
+		case x == parent.rightChild():
+			w = parent.leftChild()
 			if w.getColor() == RED {
-				w.recolor()
-				x.getParent().setColor(RED)
-				tree.rightRotate(x.getParent())
-				w = x.getParent().leftChild()
+				w.setColor(BLACK)
+				parent.setColor(RED)
+				tree.rightRotate(parent)
+				w = parent.leftChild()
 			}
-			if w.rightChild().getColor() == BLACK && w.leftChild().getColor() == BLACK {
+			if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
 				w.setColor(RED)
-				x = x.getParent()
+				x = parent
 			} else {
 				if w.leftChild().getColor() == BLACK {
-					w.rightChild().setColor(BLACK)
+					if w.rightChild() != nil {
+						w.rightChild().setColor(BLACK)
+					}
 					w.setColor(RED)
 					tree.leftRotate(w)
-					w = x.getParent().leftChild()
+					w = parent.leftChild()
 				}
-				w.setColor(x.getParent().getColor())
-				x.getParent().setColor(BLACK)
-				w.leftChild().setColor(BLACK)
-				tree.rightRotate(x.getParent())
+				w.setColor(parent.getColor())
+				parent.setColor(BLACK)
+				if w.leftChild() != nil {
+					w.leftChild().setColor(BLACK)
+				}
+				tree.rightRotate(parent)
 				x = tree.Root()
 			}
 		}
-		// if x == x.getParent().leftChild() {
-		// 	w := x.getParent().rightChild()
-		// 	if w.getColor() == RED {
-		// 		w.recolor()
-		// 		x.getParent().setColor(RED)
-		// 		tree.leftRotate(x.getParent())
-		// 		w = x.getParent().rightChild()
-		// 	}
-		// 	if w.leftChild().getColor() == BLACK && w.rightChild().getColor() == BLACK {
-		// 		w.setColor(RED)
-		// 		x = x.getParent()
-		// 	} else {
-		// 		if w.rightChild().getColor() == BLACK {
-		// 			w.leftChild().setColor(BLACK)
-		// 			w.setColor(RED)
-		// 			tree.rightRotate(w)
-		// 			w = x.getParent().rightChild()
-		// 		}
-		// 		w.setColor(x.getParent().getColor())
-		// 		x.getParent().setColor(BLACK)
-		// 		w.rightChild().setColor(BLACK)
-		// 		tree.leftRotate(x.getParent())
-		// 		x = tree.Root()
-		// 	}
-		// } else {
-		// 	w := x.getParent().leftChild()
-		// 	if w.getColor() == RED {
-		// 		w.recolor()
-		// 		x.getParent().setColor(RED)
-		// 		tree.rightRotate(x.getParent())
-		// 		w = x.getParent().leftChild()
-		// 	}
-		// 	if w.rightChild().getColor() == BLACK && w.leftChild().getColor() == BLACK {
-		// 		w.setColor(RED)
-		// 		x = x.getParent()
-		// 	} else {
-		// 		if w.leftChild().getColor() == BLACK {
-		// 			w.rightChild().setColor(BLACK)
-		// 			w.setColor(RED)
-		// 			tree.leftRotate(w)
-		// 			w = x.getParent().leftChild()
-		// 		}
-		// 		w.setColor(x.getParent().getColor())
-		// 		x.getParent().setColor(BLACK)
-		// 		w.leftChild().setColor(BLACK)
-		// 		tree.rightRotate(x.getParent())
-		// 		x = tree.Root()
-		// 	}
-		// }
 	}
-	x.setColor(BLACK)
+	if x != nil {
+		x.setColor(BLACK)
+	}
 }
 
 // Search takes a key and searches for the key in the tree.

@@ -33,7 +33,8 @@ func TestRBT_Delete(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
 	keyVals := make(map[interface{}]int)
-	for i := 0; i < 100; i++ {
+	size := 100
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		got, err := tree.Insert(key, i)
 		keyVals[got] = i
@@ -44,7 +45,6 @@ func TestRBT_Delete(t *testing.T) {
 	}
 
 	for key, _ := range keyVals {
-		fmt.Printf("deleting key: %v\n", key)
 		deletedKey, err := tree.Delete(key)
 		if err != nil {
 			t.Errorf("Delete() error = %v", err)
@@ -57,8 +57,8 @@ func TestRBT_Delete(t *testing.T) {
 		}
 	}
 
-	if !tree.IsBalanced() {
-		t.Errorf("Tree is not balanced after ALL deletions")
+	if !tree.IsBalanced() && tree.Size() != 0 {
+		t.Errorf("Failed deletion")
 	}
 
 	tree.InOrderTraversal()

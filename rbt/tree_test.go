@@ -12,7 +12,8 @@ import (
 func TestRBT_Insert(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		got, err := tree.Insert(key, i)
 		if err != nil {
@@ -24,7 +25,7 @@ func TestRBT_Insert(t *testing.T) {
 		}
 	}
 
-	if tree.Size() != 100 {
+	if tree.Size() != size {
 		t.Errorf("Tree size = %v, want %v", tree.Size(), 100)
 	}
 }
@@ -33,7 +34,7 @@ func TestRBT_Delete(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
 	keyVals := make(map[interface{}]int)
-	size := 100
+	size := 10000
 	for i := 0; i < size; i++ {
 		key := rand.Int()
 		got, err := tree.Insert(key, i)
@@ -68,7 +69,8 @@ func TestRBT_Search(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
 	keyVals := make(map[interface{}]int)
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		got, err := tree.Insert(key, i)
 		keyVals[got] = i
@@ -92,7 +94,8 @@ func TestRBT_ReturnNodeValue(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
 	keyVals := make(map[interface{}]int)
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		got, err := tree.Insert(key, i)
 		keyVals[got] = i
@@ -115,7 +118,8 @@ func TestRBT_ReturnNodeValue(t *testing.T) {
 
 func TestRBT_DepthFirstTraversal(t *testing.T) {
 	tree := NewWithIntComparator()
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		_, err := tree.Insert(key, i)
 		if err != nil {
@@ -131,7 +135,8 @@ func TestRBT_DepthFirstTraversal(t *testing.T) {
 func TestRBT_InOrderTraversal(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		_, err := tree.Insert(key, i)
 		if err != nil {
@@ -147,7 +152,8 @@ func TestRBT_InOrderTraversal(t *testing.T) {
 func TestRBT_IsBalanced(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		_, err := tree.Insert(key, i)
 		if err != nil {
@@ -155,7 +161,7 @@ func TestRBT_IsBalanced(t *testing.T) {
 		}
 	}
 
-	if !tree.IsBalanced() && tree.Size() != 100 {
+	if !tree.IsBalanced() && tree.Size() != size {
 		t.Errorf("Tree is not balanced")
 	}
 }
@@ -163,7 +169,8 @@ func TestRBT_IsBalanced(t *testing.T) {
 func TestRBT_BlackHeight(t *testing.T) {
 	tree := NewWithIntComparator()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 100; i++ {
+	size := 10000
+	for i := 0; i < size; i++ {
 		key := rand.Int()
 		_, err := tree.Insert(key, i)
 		if err != nil {

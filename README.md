@@ -26,9 +26,9 @@ tree.Clear()
 
 Example usage:
 ```go
-import github.com/chancetudor/trees/bst
+import github.com/chancetudor/trees/rbt
 
-tree := bst.NewWithIntComparator()
+tree := rbt.NewWithIntComparator()
 
 returnedKey, err := tree.Insert(key, value)
 exists := tree.Search(returnedKey)
@@ -38,6 +38,10 @@ deletedKey, err := tree.Delete(returnedKey)
 rootNode := tree.Root()
 treeSize := tree.Size()
 emptyFlag := tree.IsEmpty()
+balancedFlag := tree.IsBalanced()
+blackHeight := tree.BlackHeight()
+tree.DepthFirstTraversal()
+tree.InOrderTraversal()
 tree.Clear()
 ```
 
@@ -45,9 +49,9 @@ tree.Clear()
 
 Example usage:
 ```go
-import github.com/chancetudor/trees/bst
+import github.com/chancetudor/trees/avl
 
-tree := bst.NewWithIntComparator()
+tree := avl.NewWithIntComparator()
 
 returnedKey, err := tree.Insert(key, value)
 exists := tree.Search(returnedKey)
@@ -57,6 +61,9 @@ deletedKey, err := tree.Delete(returnedKey)
 rootNode := tree.Root()
 treeSize := tree.Size()
 emptyFlag := tree.IsEmpty()
+balancedFlag := tree.IsBalanced()
+tree.DepthFirstTraversal()
+tree.InOrderTraversal()
 tree.Clear()
 ```
 

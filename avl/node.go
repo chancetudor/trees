@@ -29,7 +29,7 @@ func NewNode(k, v interface{}) *Node {
 		left:   nil,
 		right:  nil,
 		parent: nil,
-		height: 0,
+		height: 1, // new node is added at leaf initially
 		Data: &NodeData{
 			Key:   k,
 			Value: v,
@@ -38,7 +38,11 @@ func NewNode(k, v interface{}) *Node {
 }
 
 // BalanceFactor returns the difference in a node's left subtree's height and its right subtree's height.
+// Function returns 0 if node is nil.
 func (node *Node) BalanceFactor() int {
+	if node == nil {
+		return 0
+	}
 	return node.rightChild().getHeight() - node.leftChild().getHeight()
 }
 
@@ -61,13 +65,13 @@ func (node *Node) setHeight(h int) {
 }
 
 // getHeight returns the getHeight stored in the node.
-// if node is nil, the function returns -1.
+// if node is nil, the function returns 0.
 func (node *Node) getHeight() int {
 	if node != nil {
 		return node.height
 	}
 
-	return int(math.Inf(-1))
+	return 0
 }
 
 // dfs traverses the nodes in a depth-first search paradigm.

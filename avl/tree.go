@@ -3,7 +3,6 @@ package avl
 import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
-	"math"
 )
 
 /* Package avl implements an AVL tree in Go
@@ -93,38 +92,99 @@ func (tree *AVL) Insert(key, value interface{}) (interface{}, error) {
 	case compare > 0:
 		parent.setRightChild(newNode)
 	}
-
 	newNode.setHeight(newNode.calculateHeight())
-
-	err := tree.insertFixup(newNode)
-	if err != nil {
-		return nil, err
-	}
+	tree.fixup(newNode)
 	tree.setSize(tree.Size() + 1)
 
 	return newNode.key(), nil
 }
 
-// insertFixup rebalances the AVL tree to maintain the invariant:
-// -1 <= getHeight(leftSubtree) - getHeight(rightSubtree) <= 1
-func (tree *AVL) insertFixup(node *Node) error {
-
-	bf := node.BalanceFactor()
-	if bf == int(math.Inf(-1)) {
-		return NewNilNodeError("Cannot calculate balance factor on a nil node")
+// Delete takes a key, removes the node from the tree, and decrements the size of the tree.
+// The function returns the key of the deleted node and an error, if there was one.
+func (tree *AVL) Delete(key interface{}) (interface{}, error) {
+	nodeToDelete, err := tree.findNode(key)
+	// node with key does not exist
+	if err != nil {
+		return nil, err
 	}
+	nodeToDeleteKey := nodeToDelete.key()
+
+	// node is already a leaf
+	if nodeToDelete.isLeaf() {
+		tree.pruneLeaf(nodeToDelete)
+		return nodeToDeleteKey, nil
+	}
+
+	switch {
+	case nodeToDelete.leftChild() == nil: // the node to delete only has a right subtree
+		tree.replaceSubTree(nodeToDelete, nodeToDelete.rightChild())
+	case nodeToDelete.rightChild() == nil: // the node to delete only has a left subtree
+		tree.replaceSubTree(nodeToDelete, nodeToDelete.leftChild())
+	default: // the node to delete has two subtrees
+		successor := nodeToDelete.successor()
+		if successor.getParent() != nodeToDelete {
+			tree.replaceSubTree(successor, successor.rightChild())
+			successor.setRightChild(nodeToDelete.rightChild())
+			successor.rightChild().setParent(successor)
+		}
+		tree.replaceSubTree(nodeToDelete, successor)
+		successor.setLeftChild(nodeToDelete.leftChild())
+		successor.leftChild().setParent(successor)
+	}
+	tree.fixup(nodeToDelete)
+	tree.setSize(tree.Size() - 1)
+
+	return nodeToDeleteKey, nil
+}
+
+// fixup rebalances the AVL tree to maintain the invariant:
+// -1 <= getHeight(leftSubtree) - getHeight(rightSubtree) <= 1
+func (tree *AVL) fixup(node *Node) {
+	bf := node.BalanceFactor()
 	if bf < -1 || bf > 1 {
 		tree.rebalance(node)
 	}
 	if node.isRoot() {
-		return nil
+		return
 	}
-	err := tree.insertFixup(node.getParent())
-	if err != nil {
-		return err
-	}
+	tree.fixup(node.getParent())
+}
 
-	return nil
+// replaceSubTree replaces the node to delete with a new root node of a subtree.
+// That is, if a node to delete is the root node of a subtree,
+// the function replaces it with a new root of that subtree.
+func (tree *AVL) replaceSubTree(toDelete *Node, replacementNode *Node) {
+	parent := toDelete.getParent()
+	switch {
+	case toDelete.isRoot():
+		tree.setRoot(replacementNode)
+	case toDelete == parent.leftChild(): // node to delete is left child
+		parent.setLeftChild(replacementNode)
+	default: // node to delete is right child
+		parent.setRightChild(replacementNode)
+	}
+	if replacementNode != nil {
+		replacementNode.setParent(toDelete.getParent())
+	}
+}
+
+// pruneLeaf removes a leaf from the tree.
+// If the node to delete is the root, tree.Clear() is called.
+// The function does not decrement the size of the tree.
+func (tree *AVL) pruneLeaf(toDelete *Node) {
+	if toDelete.isRoot() {
+		tree.Clear()
+		return
+	}
+	parent := toDelete.getParent()
+	switch {
+	case toDelete == parent.leftChild(): // node to delete is left of parent
+		parent.setLeftChild(nil)
+	case toDelete == parent.rightChild(): // node to delete is right of parent
+		parent.setRightChild(nil)
+	}
+	tree.fixup(toDelete)
+	toDelete.clear()
 }
 
 // rebalance determines which rotations to perform to maintain the AVL invariant.
@@ -143,13 +203,6 @@ func (tree *AVL) rebalance(node *Node) {
 			tree.rightLeftRotate(node)
 		}
 	}
-}
-
-// Delete takes a key, removes the node from the tree, and decrements the size of the tree.
-// The function returns the key of the deleted node and an error, if there was one.
-// TODO
-func (tree *AVL) Delete(key interface{}) (interface{}, error) {
-	return nil, nil
 }
 
 // leftRightRotate performs a left rotation on a node's left subtree, then a right rotation on the node itself.
@@ -190,6 +243,8 @@ func (tree *AVL) leftRotate(node *Node) {
 	}
 	newParent.setLeftChild(node)
 	node.setParent(newParent)
+	newParent.setHeight(newParent.calculateHeight())
+	node.setHeight(node.calculateHeight())
 }
 
 // rightRotate performs right rotations on the nodes
@@ -218,6 +273,8 @@ func (tree *AVL) rightRotate(node *Node) {
 	}
 	newParent.setRightChild(node)
 	node.setParent(newParent)
+	newParent.setHeight(newParent.calculateHeight())
+	node.setHeight(node.calculateHeight())
 }
 
 // Search takes a key and searches for the key in the tree.

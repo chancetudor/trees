@@ -1,6 +1,10 @@
 package avl
 
-import "github.com/emirpasic/gods/utils"
+import (
+	"fmt"
+	"github.com/emirpasic/gods/utils"
+	"math"
+)
 
 /* Package avl implements an AVL tree in Go
 * An AVL tree is a Node-based binary tree data structure which has the following properties:
@@ -59,6 +63,7 @@ func (tree *AVL) Insert(key, value interface{}) (interface{}, error) {
 	if tree.IsEmpty() {
 		tree.setRoot(newNode)
 		tree.setSize(tree.Size() + 1)
+		newNode.setHeight(0)
 		return newNode.key(), nil
 	}
 
@@ -89,41 +94,55 @@ func (tree *AVL) Insert(key, value interface{}) (interface{}, error) {
 		parent.setRightChild(newNode)
 	}
 
-	tree.insertFixup(newNode)
+	newNode.setHeight(newNode.calculateHeight())
+
+	err := tree.insertFixup(newNode)
+	if err != nil {
+		return nil, err
+	}
 	tree.setSize(tree.Size() + 1)
 
 	return newNode.key(), nil
 }
 
 // insertFixup rebalances the AVL tree to maintain the invariant:
-// -1 <= height(leftSubtree) - height(rightSubtree <= 1
-func (tree AVL) insertFixup(node *Node) {
-	if node.isRoot() {
-		return
+// -1 <= getHeight(leftSubtree) - getHeight(rightSubtree) <= 1
+func (tree *AVL) insertFixup(node *Node) error {
+
+	bf := node.BalanceFactor()
+	if bf == int(math.Inf(-1)) {
+		return NewNilNodeError("Cannot calculate balance factor on a nil node")
 	}
-	if node.BalanceFactor() < -1 || node.BalanceFactor() > 1 {
+	if bf < -1 || bf > 1 {
 		tree.rebalance(node)
 	}
-	tree.insertFixup(node.getParent())
+	if node.isRoot() {
+		return nil
+	}
+	err := tree.insertFixup(node.getParent())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // rebalance determines which rotations to perform to maintain the AVL invariant.
 func (tree *AVL) rebalance(node *Node) {
 	switch {
-	case node.leftChild().height()-node.rightChild().height() > 1:
-		if node.leftChild().leftChild().height() > node.leftChild().rightChild().height() { // left-left subtree bigger
+	case node.leftChild().getHeight() > node.rightChild().getHeight()+1:
+		if node.leftChild().leftChild().getHeight() >= node.leftChild().rightChild().getHeight() { // left-left subtree bigger
 			tree.rightRotate(node)
 		} else { // right subtree bigger
 			tree.leftRightRotate(node)
 		}
-	case node.leftChild().height()-node.rightChild().height() < -1:
-		if node.rightChild().leftChild().height() > node.rightChild().rightChild().height() { // left-left subtree bigger
+	case node.rightChild().getHeight() > node.leftChild().getHeight()+1:
+		if node.rightChild().rightChild().getHeight() >= node.rightChild().leftChild().getHeight() { // left-left subtree bigger
 			tree.leftRotate(node)
 		} else { // right subtree bigger
 			tree.rightLeftRotate(node)
 		}
 	}
-
 }
 
 // Delete takes a key, removes the node from the tree, and decrements the size of the tree.
@@ -137,7 +156,6 @@ func (tree *AVL) Delete(key interface{}) (interface{}, error) {
 func (tree *AVL) leftRightRotate(node *Node) {
 	tree.leftRotate(node.leftChild())
 	tree.rightRotate(node)
-
 }
 
 // rightLeftRotate performs a right rotation on a node's right subtree, then a left rotation on the node itself.
@@ -147,7 +165,7 @@ func (tree *AVL) rightLeftRotate(node *Node) {
 }
 
 // leftRotate performs right rotations on the nodes
-// in the tree to keep the RBT height invariant.
+// in the tree to keep the RBT getHeight invariant.
 // From CLRS: When we do a left rotation on a node x,
 // we assume that its right child y is not nil; x may be any node in
 // the tree whose right child is not nil.
@@ -175,7 +193,7 @@ func (tree *AVL) leftRotate(node *Node) {
 }
 
 // rightRotate performs right rotations on the nodes
-// in the tree to keep the RBT height invariant.
+// in the tree to keep the RBT getHeight invariant.
 // From CLRS: When we do a right rotation on a node x,
 // we assume that its left child y is not nil; x may be any node in
 // the tree whose left child is not nil.
@@ -211,6 +229,41 @@ func (tree *AVL) Search(key interface{}) bool {
 	}
 
 	return true
+}
+
+// IsBalanced returns a bool representing whether
+// the AVL tree maintains the invariant:
+// -1 <= getHeight(leftSubtree) - getHeight(rightSubtree) <= 1
+func (tree *AVL) IsBalanced() bool {
+	switch {
+	case tree.IsEmpty():
+		return true
+	case tree.Root().BalanceFactor() < -1 || tree.Root().BalanceFactor() > 1:
+		return false
+	default:
+		return true
+	}
+}
+
+// DepthFirstTraversal (pre-order traversal) traverses the binary search tree by printing the root node,
+// then recursively visiting the left and the right nodes of the current node.
+func (tree *AVL) DepthFirstTraversal() {
+	if !tree.IsEmpty() {
+		tree.Root().dfs()
+		return
+	}
+
+	fmt.Println("Empty tree: []")
+}
+
+// InOrderTraversal prints every node's value in order from smallest to greatest.
+func (tree *AVL) InOrderTraversal() {
+	if !tree.IsEmpty() {
+		tree.Root().inOrder()
+		return
+	}
+
+	fmt.Println("Empty tree: []")
 }
 
 // findNode takes a key and returns the node associated with that key.

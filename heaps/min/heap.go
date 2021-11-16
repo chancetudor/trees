@@ -85,29 +85,36 @@ func (h *Heap) trickleDown() {
 		// 3) right child; if heap property is broken, swap
 		switch {
 		case h.leftChild(currIndex) != -1 && h.rightChild(currIndex) != -1:
-			if h.comparator(leftChildKey, rightChildKey) < 0 { // left child smaller
-				if h.comparator(leftChildKey, currKey) < 0 { // heap property broken
-					currKey, leftChildKey = h.swap(currIndex, h.leftChild(currIndex))
-					currIndex = h.leftChild(currIndex)
-				}
-			} else if h.comparator(h.store[h.leftChild(currIndex)].key(), h.store[h.rightChild(currIndex)].key()) > 0 { // right child smaller
-				if h.comparator(rightChildKey, currKey) < 0 { // heap property broken
-					currKey, rightChildKey = h.swap(currIndex, h.rightChild(currIndex))
-					currIndex = h.rightChild(currIndex)
-				}
-			}
-		case h.leftChild(0) != -1:
-			if h.comparator(leftChildKey, currKey) < 0 { // heap property broken
+			if h.isSmaller(leftChildKey, rightChildKey) && h.isSmaller(leftChildKey, currKey) { // left child smaller & heap property is broken
 				currKey, leftChildKey = h.swap(currIndex, h.leftChild(currIndex))
 				currIndex = h.leftChild(currIndex)
-			}
-		case h.rightChild(0) != -1:
-			if h.comparator(rightChildKey, currKey) < 0 { // heap property broken
+			} else if h.isSmaller(rightChildKey, currKey) { // right child smaller & heap property is broken
 				currKey, rightChildKey = h.swap(currIndex, h.rightChild(currIndex))
 				currIndex = h.rightChild(currIndex)
 			}
+		case h.leftChild(currIndex) != -1:
+			if h.isSmaller(leftChildKey, currKey) { // heap property broken
+				currKey, leftChildKey = h.swap(currIndex, h.leftChild(currIndex))
+				currIndex = h.leftChild(currIndex)
+			}
+		case h.rightChild(currIndex) != -1:
+			if h.isSmaller(rightChildKey, currKey) { // heap property broken
+				currKey, rightChildKey = h.swap(currIndex, h.rightChild(currIndex))
+				currIndex = h.rightChild(currIndex)
+			}
+		default:
+			return
 		}
 	}
+}
+
+// isSmaller returns true if key1 is smaller than key2 and false otherwise.
+func (h *Heap) isSmaller(key1 interface{}, key2 interface{}) bool {
+	if h.comparator(key1, key2) < 0 {
+		return true
+	}
+
+	return false
 }
 
 // Insert adds an item to a heap while maintaining its heap property.
@@ -124,15 +131,16 @@ func (h *Heap) Insert(key, val interface{}) interface{} {
 
 // DeleteMin removes the minimum from the heap and returns the key and value of the deleted node.
 func (h *Heap) DeleteMin() (interface{}, interface{}) {
+	k, v := h.Root().key(), h.Root().value()
 	// Copy the last value in the array to the root;
 	_, _ = h.swap(0, len(h.store)-1)
-	// Decrease heap's size by 1;
+	// Decrease heap's size by 1 and overwrite underlying slice.
 	h.setSize(h.Size() - 1)
-	h.setStore(h.store[0 : len(h.store)-1])
-	// Sift down root's value. Sifting is done as following:
+	h.store[len(h.store)-1] = nil
+	h.setStore(h.store[:len(h.store)-1])
 	h.trickleDown()
 
-	return nil, nil
+	return k, v
 }
 
 // IsEmpty returns true if heap is empty and false if it has a node.
@@ -194,54 +202,3 @@ func (h *Heap) rightChild(index int) int {
 func (h *Heap) setStore(newHeap []*Node) {
 	h.store = newHeap
 }
-
-// // Update takes a key and a value and updates a node with the existing key with the new value.
-// // Returns the new value of the node or an error, if there was one.
-// func (h *Heap) Update(key interface{}, value interface{}) (interface{}, error) {
-// 	matchingNode, err := h.findNode(key)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	matchingNode.setValue(value)
-//
-// 	return matchingNode.value(), nil
-// }
-//
-// // ReturnNodeValue takes a key and returns the value associated with the key or an error, if there was one.
-// func (h *Heap) ReturnNodeValue(key interface{}) (interface{}, error) {
-// 	matchingNode, err := h.findNode(key)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return matchingNode.value(), nil
-// }
-//
-// // Search takes a key and searches for the key in the tree.
-// // The function returns a boolean, stating whether the key was found or not.
-// func (h *Heap) Search(key interface{}) bool {
-// 	_, err := h.findNode(key)
-// 	if err != nil {
-// 		return false
-// 	}
-//
-// 	return true
-// }
-//
-// // findNode takes a key and returns the node associated with that key.
-// // Returns nil and an error if no node exists.
-// func (h *Heap) findNode(key interface{}) (*Node, error) {
-// 	tempNode := h.Root()
-// 	for tempNode != nil {
-// 		compare := h.comparator(key, tempNode.key())
-// 		switch {
-// 		case compare < 0:
-// 			tempNode = tempNode.leftChild()
-// 		case compare > 0:
-// 			tempNode = tempNode.rightChild()
-// 		case compare == 0:
-// 			return tempNode, nil
-// 		}
-// 	}
-//
-// 	return nil, NewNilNodeError(key)
-// }

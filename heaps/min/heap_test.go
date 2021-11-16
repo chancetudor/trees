@@ -1,6 +1,7 @@
 package min
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -61,11 +62,17 @@ func TestHeap_DeleteMin(t *testing.T) {
 	if k != -100 {
 		t.Errorf("Got %d, want %d", k, -100)
 	}
+	for _, v := range heap.store {
+		fmt.Println(v.Key, v.Value)
+	}
 	k, _ = heap.DeleteMin()
 	if k != -100 {
 		t.Errorf("Got %d, want %d", k, -100)
 	}
+	for _, v := range heap.store {
+		fmt.Println(v.Key, v.Value)
+	}
 	if heap.Root().key() != -1 {
-		t.Errorf("Got %d, want %d", heap.Root().key(), -1)
+		t.Errorf("Got %v, want %d", heap.Root().key(), -1)
 	}
 }
